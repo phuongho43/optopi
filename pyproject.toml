@@ -17,11 +17,23 @@ classifiers = [
     "Programming Language :: Python :: 3.13",
     "Topic :: Software Development :: Libraries :: Python Modules",
 ]
+dependencies = [
+    "lmfit>=1.3.2",
+    "matplotlib>=3.9.2",
+    "natsort>=8.4.0",
+    "numdifftools>=0.9.41",
+    "numpy>=2.0.2",
+    "pandas>=2.2.3",
+    "scipy>=1.13.1",
+    "seaborn>=0.13.2",
+]
 
 [project.urls]
-Homepage = "https://phuongho43.github.io/optopi/"
 Repository = "https://github.com/phuongho43/optopi"
-Documentation = "https://phuongho43.github.io/optopi/"
+
+[project.scripts]
+fit_model = "optopi.fit_model:main"
+sim_model = "optopi.sim_model:main"
 
 [tool.uv]
 dev-dependencies = [
@@ -30,9 +42,7 @@ dev-dependencies = [
     "tox-uv>=1.11.3",
     "deptry>=0.20.0",
     "mypy>=0.991",
-
     "ruff>=0.6.9",
-
 ]
 
 [build-system]
