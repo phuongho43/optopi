@@ -11,7 +11,7 @@ from optopi.utils import makedirs
 
 Y_CSV_FP = "/home/phuong/projects/optopi/example/data/LID/I427V/y.csv"
 U_CSV_FP = "/home/phuong/projects/optopi/example/data/LID/I427V/u.csv"
-SAVE_DP = "/home/phuong/projects/optopi/example/model/LID/I427V/"
+SAVE_DP = "/home/phuong/projects/optopi/example/fit_model/LID/I427V/"
 ODE_MODEL = sim_lid  # 'sim_lov' or 'sim_lid'
 
 

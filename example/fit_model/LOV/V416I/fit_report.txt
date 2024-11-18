@@ -1,0 +1,14 @@
+[[Fit Statistics]]
+    # fitting method   = differential_evolution
+    # function evals   = 8001
+    # data points      = 62
+    # variables        = 3
+    chi-square         = 45.0819016
+    reduced chi-square = 0.76410003
+    Akaike info crit   = -13.7565179
+    Bayesian info crit = -7.37511475
+##  Warning: uncertainties could not be estimated:
+[[Variables]]
+    kl:  2.78443327 (init = 0)
+    kd:  0.00947688 (init = 0)
+    kb:  0.40761018 (init = 0)
