@@ -5,9 +5,9 @@ from scipy.integrate import ode
 def sim_lov(tt, y0, uu, kk):
     def model(t, y):
         [Ai, Aa, B, AB] = y
-        kl = kk["kl"].value
-        kd = kk["kd"].value
-        kb = kk["kb"].value
+        kl = kk["kl"]
+        kd = kk["kd"]
+        kb = kk["kb"]
         v = 0 if u != 0 else 1
         dAi = -u * kl * Ai + v * kd * Aa - kb * Ai * B
         dAa = u * kl * Ai - v * kd * Aa + u * kl * AB
@@ -31,9 +31,9 @@ def sim_lov(tt, y0, uu, kk):
 def sim_lid(tt, y0, uu, kk):
     def model(t, y):
         [Ai, Aa, B, AB] = y
-        kl = kk["kl"].value
-        kd = kk["kd"].value
-        kb = kk["kb"].value
+        kl = kk["kl"]
+        kd = kk["kd"]
+        kb = kk["kb"]
         v = 0 if u != 0 else 1
         dAi = -u * kl * Ai + v * kd * Aa + v * kd * AB
         dAa = u * kl * Ai - v * kd * Aa - kb * Aa * B
@@ -58,12 +58,12 @@ def sim_sparser(tt, y0, uu, kk):
     def model(t, y):
         [Ai0, Aa0, Bi0, Ba0, C0, AiBi0, AiBa0, BaC0, AiBaC0] = y0
         [Ai, Aa, Bi, Ba, C, AiBi, AiBa, BaC, AiBaC] = y
-        kl1 = kk["kl1"].value
-        kd1 = kk["kd1"].value
-        kb1 = kk["kb1"].value
-        kl2 = kk["kl2"].value
-        kd2 = kk["kd2"].value
-        kb2 = kk["kb2"].value
+        kl1 = kk["kl1"]
+        kd1 = kk["kd1"]
+        kb1 = kk["kb1"]
+        kl2 = kk["kl2"]
+        kd2 = kk["kd2"]
+        kb2 = kk["kb2"]
         [kl1, kd1, kb1, kl2, kd2, kb2] = kk
         v = 0 if u != 0 else 1
         dAi = -u * kl1 * Ai + v * kd1 * Aa - kb1 * Ai * Bi - kb1 * Ai * Ba - kb1 * Ai * BaC

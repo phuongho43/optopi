@@ -30,6 +30,7 @@ def obj_func_opto_switch(kk, ty, yy, ye, y0, tu, uu):
     Returns:
         residual (1 x I array): error between data vs model, scaled by the uncertainty of yy
     """
+    kk = {name: param.value for name, param in kk.items()}
     tm, ym = ODE_MODEL(tu, y0, uu, kk)
     ym = ym[-1]  # get model response for [AB]
     ym = ym[np.isin(tu, ty)]  # get only model response at same timepoints as the yy data
