@@ -97,7 +97,7 @@ def plot_model_fit(fig_fp, k_json_fp, y_csv_fp, u_csv_fp, ode_model):
     plt.close("all")
 
 
-def sim_sparser(fig_fp, k_lovfast_json_fp, k_lidslow_json_fp, y_csv_fp, u_csv_fp):
+def plot_sparser_pred(fig_fp, k_lovfast_json_fp, k_lidslow_json_fp, y_csv_fp, u_csv_fp):
     fig_fp_pl = Path(fig_fp)
     fig_fp_pl.parent.mkdir(parents=True, exist_ok=True)
     with open(k_lovfast_json_fp) as jf:
@@ -122,7 +122,7 @@ def sim_sparser(fig_fp, k_lovfast_json_fp, k_lidslow_json_fp, y_csv_fp, u_csv_fp
     yd_df["y"] = yd_df["y"] - np.min(yy)
     yy = yy - np.min(yy)
     y0 = [0, 0, 0, 0, np.max(yy), np.max(yy), 0, 0, yy[0]]
-    tm, ym = ode_model(tu, y0, uu, kk)
+    tm, ym = sim_sparser(tu, y0, uu, kk)
     ym_df = pd.DataFrame({"t": tm, "y": ym[-1]})
     with plt.style.context(("seaborn-v0_8-whitegrid", CUSTOM_STYLE)):
         fig, ax = plt.subplots(figsize=(24, 20))
@@ -167,91 +167,85 @@ def sim_sparser(fig_fp, k_lovfast_json_fp, k_lidslow_json_fp, y_csv_fp, u_csv_fp
     plt.close("all")
 
 
-# def plot_figure_s10c():
-#     # Model for dense channel
-#     # iLIDfast parameters
-#     kl = 48.277
-#     kd = 0.213
-#     kb = 89.984
-#     kk_dense = [kl, kd, kb]
-#     dense_dp = "/home/phuong/protosignet/1--biosensor/1--training/2--iLID/0--I427V/results/"
-#     dense_csv_fp = os.path.join(dense_dp, "y.csv")
-#     y_dense_df = pd.read_csv(dense_csv_fp)
-#     y_dense_df = y_dense_df.groupby("t", as_index=False)["y"].mean()
-#     ty_dense = y_dense_df["t"].values
-#     yy_dense = y_dense_df["y"].values
-#     y0_dense = [np.max(yy_dense), 0, np.max(yy_dense), 0]
-#     ave_dense = []
-#     # Model for sparse channel
-#     # LOVfast parameters
-#     kl1 = 51.982
-#     kd1 = 0.369
-#     kb1 = 3.407
-#     # iLIDslow parameters
-#     kl2 = 14.997
-#     kd2 = 0.008
-#     kb2 = 39.708
-#     kk_sparse = [kl1, kd1, kb1, kl2, kd2, kb2]
-#     sparse_dp = "/home/phuong/protosignet/1--biosensor/4--validation/0--sparse_ch/results/"
-#     sparse_csv_fp = os.path.join(sparse_dp, "y.csv")
-#     y_sparse_df = pd.read_csv(sparse_csv_fp)
-#     y_sparse_df = y_sparse_df.groupby("t", as_index=False)["y"].mean()
-#     ty_sparse = y_sparse_df["t"].values
-#     yy_sparse = y_sparse_df["y"].values
-#     yy_sparse = yy_sparse - np.min(yy_sparse)
-#     y0_sparse = [0, 0, 0, 0, np.max(yy_sparse), np.max(yy_sparse), 0, 0, yy_sparse[0]]
-#     ave_sparse = []
-#     # freq scan -----------------
-#     tu = np.arange(0, 301, 1)
-#     periods = list(range(1, 20)) + [24, 28, 32, 36, 40, 50, 60, 80, 100, 200, 300, 301]
-#     periods = np.array(periods)
-#     freqs = 1 / periods
-#     for period in periods:
-#         print(period)
-#         uu = np.zeros_like(tu)
-#         uu[period:301:period] = 1
-#         tm_dense, Xm_dense = sim_ilid(tu, y0_dense, uu, kk_dense)
-#         ym_dense = Xm_dense[-1]
-#         ave_dense.append(np.mean(ym_dense))
-#         tm_sparse, Xm_sparse = sim_sparser(tu, y0_sparse, uu, kk_sparse)
-#         ym_sparse = Xm_sparse[-1]
-#         ave_sparse.append(np.mean(ym_sparse))
-#     ave_dense = np.array(ave_dense)
-#     ave_sparse = np.array(ave_sparse)
-#     print("max freq dense ch:", freqs[np.argmax(ave_dense)])
-#     print("max freq sparse ch:", freqs[np.argmax(ave_sparse)])
-#     ave_dense_df = pd.DataFrame({"t": freqs, "y": ave_dense, "h": np.ones_like(freqs) * 0})
-#     ave_sparse_df = pd.DataFrame({"t": freqs, "y": ave_sparse, "h": np.ones_like(freqs) * 1})
-#     ave_df = pd.concat([ave_dense_df, ave_sparse_df], ignore_index=True)
-#     fig_fp = os.path.join("/home/phuong/protosignet/3--figures/", "fig_s10c.png")
-#     group_labels = ["Dense Ch.", "Sparse Ch."]
-#     palette = ["#785EF0", "#FE6100"]
-#     with plt.style.context(("seaborn-whitegrid", custom_styles)):
-#         fig, ax = plt.subplots(figsize=(32, 16))
-#         sns.lineplot(data=ave_df, x="t", y="y", hue="h", ax=ax, palette=palette, lw=10)
-#         ax.set_xlabel("BL Pulsing Frequency (Hz)")
-#         ax.set_ylabel("Mean Output (AU)")
-#         ax.set_xscale("log")
-#         # ax.xaxis.set_ticks([0.0025, 0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1])
-#         # ax.get_xaxis().set_major_formatter(ScalarFormatter())
-#         group_labels = ["Dense Ch.", "Sparse Ch."]
-#         handles, _ = ax.get_legend_handles_labels()
-#         ax.legend(
-#             handles,
-#             group_labels,
-#             loc="best",
-#             markerscale=4,
-#             frameon=True,
-#             shadow=False,
-#             handletextpad=0.2,
-#             borderpad=0.2,
-#             labelspacing=0.2,
-#             handlelength=1,
-#         )
-#         fig.tight_layout()
-#         fig.canvas.draw()
-#         fig_fp = "/home/phuong/protosignet/3--figures/fig_s10c.png"
-#         fig.savefig(fig_fp, pad_inches=0.3, dpi=100, bbox_inches="tight", transparent=False)
+def predict_fm_response(
+    fig_fp, k_lidfast_json_fp, k_lovfast_json_fp, k_lidslow_json_fp, y_denser_csv_fp, y_sparser_csv_fp
+):
+    fig_fp_pl = Path(fig_fp)
+    fig_fp_pl.parent.mkdir(parents=True, exist_ok=True)
+    # Dense Decoder
+    with open(k_lidfast_json_fp) as jf:
+        kk_lidfast = json.load(jf)
+    kk_denser = kk_lidfast
+    yd_denser_df = pd.read_csv(y_denser_csv_fp)
+    y_denser_df = yd_denser_df.groupby("t", as_index=False)["y"].agg(["mean"])
+    yy_denser = y_denser_df["mean"].to_numpy()
+    y0_denser = [np.max(yy_denser), 0, np.max(yy_denser), 0]
+    ave_denser = []
+    # Sparse Decoder
+    with open(k_lovfast_json_fp) as jf:
+        kk_lovfast = json.load(jf)
+    with open(k_lidslow_json_fp) as jf:
+        kk_lidslow = json.load(jf)
+    kk_sparser = {
+        "kl1": kk_lovfast["kl"],
+        "kd1": kk_lovfast["kd"],
+        "kb1": kk_lovfast["kb"],
+        "kl2": kk_lidslow["kl"],
+        "kd2": kk_lidslow["kd"],
+        "kb2": kk_lidslow["kb"],
+    }
+    yd_sparser_df = pd.read_csv(y_sparser_csv_fp)
+    y_sparser_df = yd_sparser_df.groupby("t", as_index=False)["y"].agg(["mean"])
+    yy_sparser = y_sparser_df["mean"].to_numpy()
+    yy_sparser = yy_sparser - np.min(yy_sparser)
+    y0_sparser = [0, 0, 0, 0, np.max(yy_sparser), np.max(yy_sparser), 0, 0, yy_sparser[0]]
+    ave_sparser = []
+    # Calc FM Response
+    tu = np.arange(0, 301, 1)
+    periods = list(range(1, 20)).extend([24, 28, 32, 36, 40, 50, 60, 80, 100, 200, 300, 301])
+    periods = np.array(periods)
+    freqs = 1 / periods
+    for period in periods:
+        uu = np.zeros_like(tu)
+        uu[period:301:period] = 1
+        tm_denser, ym_denser = sim_lid(tu, y0_denser, uu, kk_denser)
+        ave_denser.append(np.mean(ym_denser[-1]))
+        tm_sparser, ym_sparser = sim_sparser(tu, y0_sparser, uu, kk_sparser)
+        ave_sparser.append(np.mean(ym_sparser[-1]))
+    ave_denser = np.array(ave_denser)
+    ave_sparser = np.array(ave_sparser)
+    print(f"peak freq dense decoder: {freqs[np.argmax(ave_denser)]}")
+    print(f"peak freq sparse decoder: {freqs[np.argmax(ave_sparser)]}")
+    ave_denser_df = pd.DataFrame({"t": freqs, "y": ave_denser, "h": np.ones_like(freqs) * 0})
+    ave_sparser_df = pd.DataFrame({"t": freqs, "y": ave_sparser, "h": np.ones_like(freqs) * 1})
+    ave_df = pd.concat([ave_denser_df, ave_sparser_df], ignore_index=True)
+    with plt.style.context(("seaborn-v0_8-whitegrid", CUSTOM_STYLE)):
+        fig, ax = plt.subplots(figsize=(24, 20))
+        palette = ["#785EF0", "#FE6100"]
+        sns.lineplot(data=ave_df, x="t", y="y", hue="h", ax=ax, palette=palette, lw=10)
+        ax.set_xlabel("Pulsing Frequency (Hz)")
+        ax.set_ylabel("Mean Ouput (AU)")
+        ax.set_xscale("log")
+        group_labels = ["Dense Decoder", "Sparse Decoder"]
+        handles, _ = ax.get_legend_handles_labels()
+        ax.legend(
+            handles,
+            group_labels,
+            loc="best",
+            markerscale=4,
+            frameon=True,
+            shadow=False,
+            handletextpad=0.4,
+            borderpad=0.2,
+            labelspacing=0.2,
+            handlelength=1,
+        )
+        ax.locator_params(axis="x", nbins=10)
+        ax.locator_params(axis="y", nbins=10)
+        fig.tight_layout()
+        fig.canvas.draw()
+        fig.savefig(fig_fp, pad_inches=0.3, dpi=100, bbox_inches="tight", transparent=False)
+    plt.close("all")
 
 
 def main():
@@ -274,7 +268,18 @@ def main():
     k_lidslow_json_fp = example_dp / "fit_model" / "LID" / "V416I" / "fit_params.json"
     y_csv_fp = example_dp / "data" / "sparse_decoder" / "y.csv"
     u_csv_fp = example_dp / "data" / "sparse_decoder" / "u.csv"
-    sim_sparser(fig_fp, k_lovfast_json_fp, k_lidslow_json_fp, y_csv_fp, u_csv_fp)
+    plot_sparser_pred(fig_fp, k_lovfast_json_fp, k_lidslow_json_fp, y_csv_fp, u_csv_fp)
+
+    # Calculate FM response for dense and sparse decoders
+    fig_fp = example_dp / "sim_model" / "fm-response.png"
+    k_lidfast_json_fp = example_dp / "fit_model" / "LID" / "I427V" / "fit_params.json"
+    k_lovfast_json_fp = example_dp / "fit_model" / "LOV" / "I427V" / "fit_params.json"
+    k_lidslow_json_fp = example_dp / "fit_model" / "LID" / "V416I" / "fit_params.json"
+    y_denser_csv_fp = example_dp / "data" / "LID" / "I427V" / "y.csv"
+    y_sparser_csv_fp = example_dp / "data" / "sparse_decoder" / "y.csv"
+    predict_fm_response(
+        fig_fp, k_lidfast_json_fp, k_lovfast_json_fp, k_lidslow_json_fp, y_denser_csv_fp, y_sparser_csv_fp
+    )
 
 
 if __name__ == "__main__":
