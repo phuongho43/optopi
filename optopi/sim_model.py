@@ -213,7 +213,36 @@ def predict_fm_response(
     ave_sparser = []
     # Calc FM Response
     tu = np.arange(0, 301, 1)
-    periods = list(range(1, 20)).extend([24, 28, 32, 36, 40, 50, 60, 80, 100, 200, 300, 301])
+    periods = [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        8,
+        10,
+        12,
+        14,
+        16,
+        20,
+        24,
+        28,
+        32,
+        36,
+        40,
+        50,
+        60,
+        70,
+        80,
+        90,
+        100,
+        120,
+        150,
+        200,
+        250,
+        301,
+    ]
     periods = np.array(periods)
     freqs = 1 / periods
     for period in periods:
@@ -225,16 +254,16 @@ def predict_fm_response(
         ave_sparser.append(np.mean(ym_sparser[-1]))
     ave_denser = np.array(ave_denser)
     ave_sparser = np.array(ave_sparser)
-    print(f"peak freq dense decoder: {freqs[np.argmax(ave_denser)]}")
-    print(f"peak freq sparse decoder: {freqs[np.argmax(ave_sparser)]}")
+    print(f"Dense Decoder FM Peak: {freqs[np.argmax(ave_denser)]} Hz")
+    print(f"Sparse Decoder FM Peak: {freqs[np.argmax(ave_sparser)]} Hz")
     ave_denser_df = pd.DataFrame({"t": freqs, "y": ave_denser, "h": np.ones_like(freqs) * 0})
     ave_sparser_df = pd.DataFrame({"t": freqs, "y": ave_sparser, "h": np.ones_like(freqs) * 1})
     ave_df = pd.concat([ave_denser_df, ave_sparser_df], ignore_index=True)
     with plt.style.context(("seaborn-v0_8-whitegrid", CUSTOM_STYLE)):
         fig, ax = plt.subplots(figsize=(24, 20))
-        palette = ["#785EF0", "#FE6100"]
-        sns.lineplot(data=ave_df, x="t", y="y", hue="h", ax=ax, palette=palette, lw=10)
-        ax.set_xlabel("Pulsing Frequency (Hz)")
+        palette = ["#8069EC", "#EA822C"]
+        sns.lineplot(data=ave_df, x="t", y="y", hue="h", ax=ax, palette=palette)
+        ax.set_xlabel("FM Input (Hz)")
         ax.set_ylabel("Mean Ouput (AU)")
         ax.set_xscale("log")
         group_labels = ["Dense Decoder", "Sparse Decoder"]
@@ -251,8 +280,6 @@ def predict_fm_response(
             labelspacing=0.2,
             handlelength=1,
         )
-        ax.locator_params(axis="x", nbins=10)
-        ax.locator_params(axis="y", nbins=10)
         fig.tight_layout()
         fig.canvas.draw()
         fig.savefig(fig_fp, pad_inches=0.3, dpi=200, bbox_inches="tight", transparent=False)
@@ -263,34 +290,34 @@ def main():
     optopi_root_dp = Path(__file__).resolve().parent.parent
     example_dp = optopi_root_dp / "example"
 
-    # Plot comparison of model fit and corresponding data
-    for prot in ["LOV", "LID"]:
-        for mut in ["I427V", "V416I"]:
-            fig_fp = example_dp / "sim_model" / prot / mut / "model-fit.png"
-            k_json_fp = example_dp / "fit_model" / prot / mut / "fit_params.json"
-            y_csv_fp = example_dp / "data" / prot / mut / "y.csv"
-            u_csv_fp = example_dp / "data" / prot / mut / "u.csv"
-            ode_model = sim_lov if prot == "LOV" else sim_lid
-            plot_model_fit(fig_fp, k_json_fp, y_csv_fp, u_csv_fp, ode_model)
+    # # Plot comparison of model fit and corresponding data
+    # for prot in ["LOV", "LID"]:
+    #     for mut in ["I427V", "V416I"]:
+    #         fig_fp = example_dp / "sim_model" / prot / mut / "model-fit.png"
+    #         k_json_fp = example_dp / "fit_model" / prot / mut / "fit_params.json"
+    #         y_csv_fp = example_dp / "data" / prot / mut / "y.csv"
+    #         u_csv_fp = example_dp / "data" / prot / mut / "u.csv"
+    #         ode_model = sim_lov if prot == "LOV" else sim_lid
+    #         plot_model_fit(fig_fp, k_json_fp, y_csv_fp, u_csv_fp, ode_model)
 
-    # Plot Sparse Decoder model prediction compared to corresponding data
-    fig_fp = example_dp / "sim_model" / "sparse_decoder" / "prediction.png"
-    k_lovfast_json_fp = example_dp / "fit_model" / "LOV" / "I427V" / "fit_params.json"
-    k_lidslow_json_fp = example_dp / "fit_model" / "LID" / "V416I" / "fit_params.json"
-    y_csv_fp = example_dp / "data" / "sparse_decoder" / "y.csv"
-    u_csv_fp = example_dp / "data" / "sparse_decoder" / "u.csv"
-    plot_sparser_pred(fig_fp, k_lovfast_json_fp, k_lidslow_json_fp, y_csv_fp, u_csv_fp)
-
-    # # Calculate FM response for dense and sparse decoders
-    # fig_fp = example_dp / "sim_model" / "fm-response.png"
-    # k_lidfast_json_fp = example_dp / "fit_model" / "LID" / "I427V" / "fit_params.json"
+    # # Plot Sparse Decoder model prediction compared to corresponding data
+    # fig_fp = example_dp / "sim_model" / "sparse_decoder" / "prediction.png"
     # k_lovfast_json_fp = example_dp / "fit_model" / "LOV" / "I427V" / "fit_params.json"
     # k_lidslow_json_fp = example_dp / "fit_model" / "LID" / "V416I" / "fit_params.json"
-    # y_denser_csv_fp = example_dp / "data" / "LID" / "I427V" / "y.csv"
-    # y_sparser_csv_fp = example_dp / "data" / "sparse_decoder" / "y.csv"
-    # predict_fm_response(
-    #     fig_fp, k_lidfast_json_fp, k_lovfast_json_fp, k_lidslow_json_fp, y_denser_csv_fp, y_sparser_csv_fp
-    # )
+    # y_csv_fp = example_dp / "data" / "sparse_decoder" / "y.csv"
+    # u_csv_fp = example_dp / "data" / "sparse_decoder" / "u.csv"
+    # plot_sparser_pred(fig_fp, k_lovfast_json_fp, k_lidslow_json_fp, y_csv_fp, u_csv_fp)
+
+    # Calculate FM response for dense and sparse decoders
+    fig_fp = example_dp / "sim_model" / "fm-response.png"
+    k_lidfast_json_fp = example_dp / "fit_model" / "LID" / "I427V" / "fit_params.json"
+    k_lovfast_json_fp = example_dp / "fit_model" / "LOV" / "I427V" / "fit_params.json"
+    k_lidslow_json_fp = example_dp / "fit_model" / "LID" / "V416I" / "fit_params.json"
+    y_denser_csv_fp = example_dp / "data" / "LID" / "I427V" / "y.csv"
+    y_sparser_csv_fp = example_dp / "data" / "sparse_decoder" / "y.csv"
+    predict_fm_response(
+        fig_fp, k_lidfast_json_fp, k_lovfast_json_fp, k_lidslow_json_fp, y_denser_csv_fp, y_sparser_csv_fp
+    )
 
 
 if __name__ == "__main__":
