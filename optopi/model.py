@@ -64,7 +64,6 @@ def sim_sparser(tt, y0, uu, kk):
         kl2 = kk["kl2"]
         kd2 = kk["kd2"]
         kb2 = kk["kb2"]
-        [kl1, kd1, kb1, kl2, kd2, kb2] = kk
         v = 0 if u != 0 else 1
         dAi = -u * kl1 * Ai + v * kd1 * Aa - kb1 * Ai * Bi - kb1 * Ai * Ba - kb1 * Ai * BaC
         dAa = u * kl1 * Ai - v * kd1 * Aa + u * kl1 * AiBi + u * kl1 * AiBa + u * kl1 * AiBaC

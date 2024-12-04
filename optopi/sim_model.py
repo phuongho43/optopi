@@ -9,26 +9,27 @@ import seaborn as sns
 
 from optopi.model import sim_lid, sim_lov, sim_sparser
 
+CUSTOM_PALETTE = ["#648FFF", "#2ECC71", "#8069EC", "#EA822C", "#D143A4", "#F1C40F", "#34495E"]
+
 CUSTOM_STYLE = {
     "image.cmap": "turbo",
     "figure.figsize": (24, 16),
     "text.color": "#212121",
-    "axes.titleweight": "bold",
     "axes.spines.top": False,
     "axes.spines.right": False,
     "axes.labelpad": 12,
     "axes.labelcolor": "#212121",
     "axes.labelweight": 600,
-    "axes.linewidth": 4,
+    "axes.linewidth": 6,
     "axes.edgecolor": "#212121",
-    "grid.linewidth": 4,
+    "grid.linewidth": 1,
     "xtick.major.pad": 12,
     "ytick.major.pad": 12,
     "lines.linewidth": 10,
-    "axes.labelsize": 64,
-    "xtick.labelsize": 48,
-    "ytick.labelsize": 48,
-    "legend.fontsize": 48,
+    "axes.labelsize": 72,
+    "xtick.labelsize": 56,
+    "ytick.labelsize": 56,
+    "legend.fontsize": 56,
 }
 
 
@@ -56,6 +57,7 @@ def plot_model_fit(fig_fp, k_json_fp, y_csv_fp, u_csv_fp, ode_model):
     ym_df = pd.DataFrame({"t": tm, "y": ym[-1]})
     with plt.style.context(("seaborn-v0_8-whitegrid", CUSTOM_STYLE)):
         fig, ax = plt.subplots(figsize=(24, 20))
+        sns.lineplot(data=ym_df, x="t", y="y", ax=ax, color="#2ECC71", zorder=2.2)
         sns.lineplot(
             data=yd_df,
             x="t",
@@ -67,14 +69,18 @@ def plot_model_fit(fig_fp, k_json_fp, y_csv_fp, u_csv_fp, ode_model):
             color="#34495E",
             marker="o",
             markersize=12,
-            zorder=5,
+            markeredgewidth=0,
+            zorder=2.3,
         )
-        sns.lineplot(data=ym_df, x="t", y="y", ax=ax, color="#648FFF", zorder=4)
+        ymin, ymax = ax.get_ylim()
+        plt.vlines(tu[uu > 0], ymin=ymin, ymax=ymax, colors="#648FFF", linewidth=1, alpha=0.5, zorder=2.1)
+        ax.set_ylim(ymin, ymax)
         handles = [
+            mpl.lines.Line2D([], [], color="#648FFF", linewidth=8, alpha=0.8),
             mpl.lines.Line2D([], [], color="#34495E", marker="o", markersize=8, linewidth=0),
-            mpl.lines.Line2D([], [], color="#648FFF", linewidth=16),
+            mpl.lines.Line2D([], [], color="#2ECC71", linewidth=16),
         ]
-        group_labels = ["Data", "Model"]
+        group_labels = ["Input", "Data", "Model"]
         ax.legend(
             handles,
             group_labels,
@@ -93,7 +99,7 @@ def plot_model_fit(fig_fp, k_json_fp, y_csv_fp, u_csv_fp, ode_model):
         ax.locator_params(axis="y", nbins=10)
         fig.tight_layout()
         fig.canvas.draw()
-        fig.savefig(fig_fp, pad_inches=0.3, dpi=100, bbox_inches="tight", transparent=False)
+        fig.savefig(fig_fp, pad_inches=0.3, dpi=200, bbox_inches="tight", transparent=False)
     plt.close("all")
 
 
@@ -126,6 +132,7 @@ def plot_sparser_pred(fig_fp, k_lovfast_json_fp, k_lidslow_json_fp, y_csv_fp, u_
     ym_df = pd.DataFrame({"t": tm, "y": ym[-1]})
     with plt.style.context(("seaborn-v0_8-whitegrid", CUSTOM_STYLE)):
         fig, ax = plt.subplots(figsize=(24, 20))
+        sns.lineplot(data=ym_df, x="t", y="y", ax=ax, color="#2ECC71", zorder=2.2)
         sns.lineplot(
             data=yd_df,
             x="t",
@@ -137,14 +144,18 @@ def plot_sparser_pred(fig_fp, k_lovfast_json_fp, k_lidslow_json_fp, y_csv_fp, u_
             color="#34495E",
             marker="o",
             markersize=12,
-            zorder=5,
+            markeredgewidth=0,
+            zorder=2.3,
         )
-        sns.lineplot(data=ym_df, x="t", y="y", ax=ax, color="#648FFF", zorder=4)
+        ymin, ymax = ax.get_ylim()
+        plt.vlines(tu[uu > 0], ymin=ymin, ymax=ymax, colors="#648FFF", linewidth=1, alpha=0.5, zorder=2.1)
+        ax.set_ylim(ymin, ymax)
         handles = [
+            mpl.lines.Line2D([], [], color="#648FFF", linewidth=8, alpha=0.8),
             mpl.lines.Line2D([], [], color="#34495E", marker="o", markersize=8, linewidth=0),
-            mpl.lines.Line2D([], [], color="#648FFF", linewidth=16),
+            mpl.lines.Line2D([], [], color="#2ECC71", linewidth=16),
         ]
-        group_labels = ["Data", "Model"]
+        group_labels = ["Input", "Data", "Model"]
         ax.legend(
             handles,
             group_labels,
@@ -163,7 +174,7 @@ def plot_sparser_pred(fig_fp, k_lovfast_json_fp, k_lidslow_json_fp, y_csv_fp, u_
         ax.locator_params(axis="y", nbins=10)
         fig.tight_layout()
         fig.canvas.draw()
-        fig.savefig(fig_fp, pad_inches=0.3, dpi=100, bbox_inches="tight", transparent=False)
+        fig.savefig(fig_fp, pad_inches=0.3, dpi=200, bbox_inches="tight", transparent=False)
     plt.close("all")
 
 
@@ -244,12 +255,12 @@ def predict_fm_response(
         ax.locator_params(axis="y", nbins=10)
         fig.tight_layout()
         fig.canvas.draw()
-        fig.savefig(fig_fp, pad_inches=0.3, dpi=100, bbox_inches="tight", transparent=False)
+        fig.savefig(fig_fp, pad_inches=0.3, dpi=200, bbox_inches="tight", transparent=False)
     plt.close("all")
 
 
 def main():
-    optopi_root_dp = Path(__file__).resolve().parent
+    optopi_root_dp = Path(__file__).resolve().parent.parent
     example_dp = optopi_root_dp / "example"
 
     # Plot comparison of model fit and corresponding data
@@ -270,16 +281,16 @@ def main():
     u_csv_fp = example_dp / "data" / "sparse_decoder" / "u.csv"
     plot_sparser_pred(fig_fp, k_lovfast_json_fp, k_lidslow_json_fp, y_csv_fp, u_csv_fp)
 
-    # Calculate FM response for dense and sparse decoders
-    fig_fp = example_dp / "sim_model" / "fm-response.png"
-    k_lidfast_json_fp = example_dp / "fit_model" / "LID" / "I427V" / "fit_params.json"
-    k_lovfast_json_fp = example_dp / "fit_model" / "LOV" / "I427V" / "fit_params.json"
-    k_lidslow_json_fp = example_dp / "fit_model" / "LID" / "V416I" / "fit_params.json"
-    y_denser_csv_fp = example_dp / "data" / "LID" / "I427V" / "y.csv"
-    y_sparser_csv_fp = example_dp / "data" / "sparse_decoder" / "y.csv"
-    predict_fm_response(
-        fig_fp, k_lidfast_json_fp, k_lovfast_json_fp, k_lidslow_json_fp, y_denser_csv_fp, y_sparser_csv_fp
-    )
+    # # Calculate FM response for dense and sparse decoders
+    # fig_fp = example_dp / "sim_model" / "fm-response.png"
+    # k_lidfast_json_fp = example_dp / "fit_model" / "LID" / "I427V" / "fit_params.json"
+    # k_lovfast_json_fp = example_dp / "fit_model" / "LOV" / "I427V" / "fit_params.json"
+    # k_lidslow_json_fp = example_dp / "fit_model" / "LID" / "V416I" / "fit_params.json"
+    # y_denser_csv_fp = example_dp / "data" / "LID" / "I427V" / "y.csv"
+    # y_sparser_csv_fp = example_dp / "data" / "sparse_decoder" / "y.csv"
+    # predict_fm_response(
+    #     fig_fp, k_lidfast_json_fp, k_lovfast_json_fp, k_lidslow_json_fp, y_denser_csv_fp, y_sparser_csv_fp
+    # )
 
 
 if __name__ == "__main__":
