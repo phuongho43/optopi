@@ -38,8 +38,9 @@ $ uv run sim_model
 |                     LOVfast                     |                     LOVslow                     |
 | :---------------------------------------------: | :---------------------------------------------: |
 | ![](/example/sim_model/LOV/I427V/model-fit.png) | ![](/example/sim_model/LOV/V416I/model-fit.png) |
+
 |                     LIDfast                     |                     LIDslow                     |
-|           :-------------------------:           |           :-------------------------:           |
+| :---------------------------------------------: | :---------------------------------------------: |
 | ![](/example/sim_model/LID/I427V/model-fit.png) | ![](/example/sim_model/LID/V416I/model-fit.png) |
 
 ### 3. Sparse Decoder Response Prediction
