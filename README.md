@@ -28,81 +28,28 @@ $ uv run sim_model
 
 ### 1. ddFP Biosensor Images
 
-<p align="center">
-    <figure>
-        <img src="/example/data/LOV/I427V/60.1.png" width="50%" />
-        <figurecaption>LOVfast [before light]</figurecaption>
-    </figure>
-    <figure>
-        <img src="/example/data/LOV/I427V/61.9.png" width="50%" />
-        <figurecaption>LOVfast [after light]</figurecaption>
-    </figure>
-</p>
-<p align="center">
-    <figure>
-        <img src="/example/data/LID/I427V/60.1.png" width="50%" />
-        <figurecaption>LIDfast [before light]</figurecaption>
-    </figure>
-    <figure>
-        <img src="/example/data/LID/I427V/62.0.png" width="50%" />
-        <figurecaption>LIDfast [after light]</figurecaption>
-    </figure>
-</p>
+| RA-LOVfast + B3-Zdk |
+| Before Stimulation | After Stimulation|
+|:-------------------------:|:-------------------------:|
+| ![](/example/data/LOV/I427V/60.1.png) | ![](/example/data/LOV/I427V/61.9.png) |
 
-### 2. Binding Dynamics
+### 2. ODE Model Fit
 
-<p align="center">
-    <figure>
-        <img src="/example/data/LOV/I427V/uy.png" width="50%" />
-        <figurecaption>LOVfast</figurecaption>
-    </figure>
-    <figure>
-        <img src="/example/data/LOV/V416I/uy.png" width="50%" />
-        <figurecaption>LOVslow</figurecaption>
-    </figure>
-</p>
-<p align="center">
-    <figure>
-        <img src="/example/data/LID/I427V/uy.png" width="50%" />
-        <figurecaption>LIDfast</figurecaption>
-    </figure>
-    <figure>
-        <img src="/example/data/LID/V416I/uy.png" width="50%" />
-        <figurecaption>LIDslow</figurecaption>
-    </figure>
-</p>
+|                     LOVfast                     |                     LOVslow                     |
+| :---------------------------------------------: | :---------------------------------------------: |
+| ![](/example/sim_model/LOV/I427V/model-fit.png) | ![](/example/sim_model/LOV/V416I/model-fit.png) |
+|                     LIDfast                     |                     LIDslow                     |
+|           :-------------------------:           |           :-------------------------:           |
+| ![](/example/sim_model/LID/I427V/model-fit.png) | ![](/example/sim_model/LID/V416I/model-fit.png) |
 
-### 3. ODE Model Fit
+### 3. Sparse Decoder Response Prediction
 
-<p align="center">
-    <figure>
-        <img src="/example/sim_model/LOV/I427V/model-fit.png" width="50%" />
-        <figurecaption>LOVfast</figurecaption>
-    </figure>
-    <figure>
-        <img src="/example/sim_model/LOV/V416I/model-fit.png" width="50%" />
-        <figurecaption>LOVslow</figurecaption>
-    </figure>
-</p>
-<p align="center">
-    <figure>
-        <img src="/example/sim_model/LID/I427V/model-fit.png" width="50%" />
-        <figurecaption>LIDfast</figurecaption>
-    </figure>
-    <figure>
-        <img src="/example/sim_model/LID/V416I/model-fit.png" width="50%" />
-        <figurecaption>LIDslow</figurecaption>
-    </figure>
-</p>
-
-### 4. Sparse Decoder Response Prediction
-
-<p align="center">
+<p align="left">
     <img src="/example/sim_model/sparse_decoder/prediction.png" width="50%" />
 </p>
 
-### 5. FM Response Prediction
+### 4. FM Response Prediction
 
-<p align="center">
+<p align="left">
     <img src="/example/sim_model/fm-response.png" width="50%" />
 </p>
