@@ -290,23 +290,23 @@ def main():
     optopi_root_dp = Path(__file__).resolve().parent.parent
     example_dp = optopi_root_dp / "example"
 
-    # # Plot comparison of model fit and corresponding data
-    # for prot in ["LOV", "LID"]:
-    #     for mut in ["I427V", "V416I"]:
-    #         fig_fp = example_dp / "sim_model" / prot / mut / "model-fit.png"
-    #         k_json_fp = example_dp / "fit_model" / prot / mut / "fit_params.json"
-    #         y_csv_fp = example_dp / "data" / prot / mut / "y.csv"
-    #         u_csv_fp = example_dp / "data" / prot / mut / "u.csv"
-    #         ode_model = sim_lov if prot == "LOV" else sim_lid
-    #         plot_model_fit(fig_fp, k_json_fp, y_csv_fp, u_csv_fp, ode_model)
+    # Plot comparison of model fit and corresponding data
+    for prot in ["LOV", "LID"]:
+        for mut in ["I427V", "V416I"]:
+            fig_fp = example_dp / "sim_model" / prot / mut / "model-fit.png"
+            k_json_fp = example_dp / "fit_model" / prot / mut / "fit_params.json"
+            y_csv_fp = example_dp / "data" / prot / mut / "y.csv"
+            u_csv_fp = example_dp / "data" / prot / mut / "u.csv"
+            ode_model = sim_lov if prot == "LOV" else sim_lid
+            plot_model_fit(fig_fp, k_json_fp, y_csv_fp, u_csv_fp, ode_model)
 
-    # # Plot Sparse Decoder model prediction compared to corresponding data
-    # fig_fp = example_dp / "sim_model" / "sparse_decoder" / "prediction.png"
-    # k_lovfast_json_fp = example_dp / "fit_model" / "LOV" / "I427V" / "fit_params.json"
-    # k_lidslow_json_fp = example_dp / "fit_model" / "LID" / "V416I" / "fit_params.json"
-    # y_csv_fp = example_dp / "data" / "sparse_decoder" / "y.csv"
-    # u_csv_fp = example_dp / "data" / "sparse_decoder" / "u.csv"
-    # plot_sparser_pred(fig_fp, k_lovfast_json_fp, k_lidslow_json_fp, y_csv_fp, u_csv_fp)
+    # Plot Sparse Decoder model prediction compared to corresponding data
+    fig_fp = example_dp / "sim_model" / "sparse_decoder" / "prediction.png"
+    k_lovfast_json_fp = example_dp / "fit_model" / "LOV" / "I427V" / "fit_params.json"
+    k_lidslow_json_fp = example_dp / "fit_model" / "LID" / "V416I" / "fit_params.json"
+    y_csv_fp = example_dp / "data" / "sparse_decoder" / "y.csv"
+    u_csv_fp = example_dp / "data" / "sparse_decoder" / "u.csv"
+    plot_sparser_pred(fig_fp, k_lovfast_json_fp, k_lidslow_json_fp, y_csv_fp, u_csv_fp)
 
     # Calculate FM response for dense and sparse decoders
     fig_fp = example_dp / "sim_model" / "fm-response.png"
