@@ -34,8 +34,6 @@ CUSTOM_STYLE = {
 
 
 def plot_model_fit(fig_fp, k_json_fp, y_csv_fp, u_csv_fp, ode_model):
-    fig_fp_pl = Path(fig_fp)
-    fig_fp_pl.parent.mkdir(parents=True, exist_ok=True)
     with open(k_json_fp) as jf:
         kk = json.load(jf)
     yd_df = pd.read_csv(y_csv_fp)
@@ -104,8 +102,6 @@ def plot_model_fit(fig_fp, k_json_fp, y_csv_fp, u_csv_fp, ode_model):
 
 
 def plot_sparser_pred(fig_fp, k_lovfast_json_fp, k_lidslow_json_fp, y_csv_fp, u_csv_fp):
-    fig_fp_pl = Path(fig_fp)
-    fig_fp_pl.parent.mkdir(parents=True, exist_ok=True)
     with open(k_lovfast_json_fp) as jf:
         kk_lovfast = json.load(jf)
     with open(k_lidslow_json_fp) as jf:
@@ -178,11 +174,7 @@ def plot_sparser_pred(fig_fp, k_lovfast_json_fp, k_lidslow_json_fp, y_csv_fp, u_
     plt.close("all")
 
 
-def predict_fm_response(
-    fig_fp, k_lidfast_json_fp, k_lovfast_json_fp, k_lidslow_json_fp, y_denser_csv_fp, y_sparser_csv_fp
-):
-    fig_fp_pl = Path(fig_fp)
-    fig_fp_pl.parent.mkdir(parents=True, exist_ok=True)
+def predict_fm_response(fig_fp, k_lidfast_json_fp, k_lovfast_json_fp, k_lidslow_json_fp, y_denser_csv_fp, y_sparser_csv_fp):
     # Dense Decoder
     with open(k_lidfast_json_fp) as jf:
         kk_lidfast = json.load(jf)
@@ -213,36 +205,7 @@ def predict_fm_response(
     ave_sparser = []
     # Calc FM Response
     tu = np.arange(0, 301, 1)
-    periods = [
-        1,
-        2,
-        3,
-        4,
-        5,
-        6,
-        8,
-        10,
-        12,
-        14,
-        16,
-        20,
-        24,
-        28,
-        32,
-        36,
-        40,
-        50,
-        60,
-        70,
-        80,
-        90,
-        100,
-        120,
-        150,
-        200,
-        250,
-        301,
-    ]
+    periods = [1, 2, 3, 4, 5, 6, 8, 10, 12, 14, 16, 20, 24, 28, 32, 36, 40, 50, 60, 70, 80, 90, 100, 120, 150, 200, 250, 301]
     periods = np.array(periods)
     freqs = 1 / periods
     for period in periods:
@@ -294,6 +257,7 @@ def main():
     for prot in ["LOV", "LID"]:
         for mut in ["I427V", "V416I"]:
             fig_fp = example_dp / "sim_model" / prot / mut / "model-fit.png"
+            fig_fp.parent.mkdir(parents=True, exist_ok=True)
             k_json_fp = example_dp / "fit_model" / prot / mut / "fit_params.json"
             y_csv_fp = example_dp / "data" / prot / mut / "y.csv"
             u_csv_fp = example_dp / "data" / prot / mut / "u.csv"
@@ -302,6 +266,7 @@ def main():
 
     # Plot Sparse Decoder model prediction compared to corresponding data
     fig_fp = example_dp / "sim_model" / "sparse_decoder" / "prediction.png"
+    fig_fp.parent.mkdir(parents=True, exist_ok=True)
     k_lovfast_json_fp = example_dp / "fit_model" / "LOV" / "I427V" / "fit_params.json"
     k_lidslow_json_fp = example_dp / "fit_model" / "LID" / "V416I" / "fit_params.json"
     y_csv_fp = example_dp / "data" / "sparse_decoder" / "y.csv"
@@ -310,14 +275,13 @@ def main():
 
     # Calculate FM response for dense and sparse decoders
     fig_fp = example_dp / "sim_model" / "fm-response.png"
+    fig_fp.parent.mkdir(parents=True, exist_ok=True)
     k_lidfast_json_fp = example_dp / "fit_model" / "LID" / "I427V" / "fit_params.json"
     k_lovfast_json_fp = example_dp / "fit_model" / "LOV" / "I427V" / "fit_params.json"
     k_lidslow_json_fp = example_dp / "fit_model" / "LID" / "V416I" / "fit_params.json"
     y_denser_csv_fp = example_dp / "data" / "LID" / "I427V" / "y.csv"
     y_sparser_csv_fp = example_dp / "data" / "sparse_decoder" / "y.csv"
-    predict_fm_response(
-        fig_fp, k_lidfast_json_fp, k_lovfast_json_fp, k_lidslow_json_fp, y_denser_csv_fp, y_sparser_csv_fp
-    )
+    predict_fm_response(fig_fp, k_lidfast_json_fp, k_lovfast_json_fp, k_lidslow_json_fp, y_denser_csv_fp, y_sparser_csv_fp)
 
 
 if __name__ == "__main__":
