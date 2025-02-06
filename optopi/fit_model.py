@@ -1,13 +1,54 @@
 import json
-import os
 from pathlib import Path
 
 import numpy as np
 import pandas as pd
 from lmfit import Parameters, fit_report, minimize
+from natsort import natsorted
 from prettytable import PrettyTable
 
 from optopi.model import sim_lid, sim_lov
+
+
+def convert_u_ta_tb(u_ta_tb_df, t0, tf):
+    u_ta = np.round(u_ta_tb_df["ta"].values, 1)
+    u_tb = np.round(u_ta_tb_df["tb"].values, 1)
+    tt = np.round(np.arange(t0, tf + 0.1, 0.1), 1)
+    uu = np.zeros_like(tt)
+    for ta, tb in zip(u_ta, u_tb):
+        if ta > tt[-1]:
+            continue
+        if tb > tt[-1]:
+            tb = tt[-1]
+        ia = np.where(tt == ta)[0][0]
+        ib = np.where(tt == tb)[0][0]
+        uu[ia:ib] = 1.0
+    tu_df = pd.DataFrame({"t": tt, "u": uu})
+    return tu_df
+
+
+def calc_dF_F0(y_df):
+    F0 = y_df["y"].iloc[:5].mean()
+    dF = y_df["y"] - F0
+    y_df["y"] = dF / F0
+    return y_df
+
+
+def process_rtz_data(class_dp, csv_fn="y.csv", calc_fnc=None, calc_fnc_kwargs=None):
+    rt_ave = []
+    rtz_df = []
+    for r, rep_dp in enumerate([rep_dp for rep_dp in natsorted(Path(class_dp).glob("*")) if rep_dp.is_dir()]):
+        csv_fp = rep_dp / csv_fn
+        tz_df = pd.read_csv(csv_fp)
+        calc_fnc_kwargs = {} if calc_fnc_kwargs is None else calc_fnc_kwargs
+        tz_df = calc_fnc(tz_df, **calc_fnc_kwargs)
+        tz_df["r"] = np.ones(len(tz_df), dtype=int) * r
+        rtz_df.append(tz_df)
+        rt_ave.append(tz_df["t"].values)
+    for tz_df in rtz_df:
+        tz_df["t"] = np.array(rt_ave).mean(axis=0)
+    rtz_df = pd.concat(rtz_df)
+    return rtz_df
 
 
 def obj_func_opto_switch(kk, ty, yy, ye, y0, tu, uu, ode_model):
@@ -28,7 +69,8 @@ def obj_func_opto_switch(kk, ty, yy, ye, y0, tu, uu, ode_model):
     kk = {name: param.value for name, param in kk.items()}
     tm, ym = ode_model(tu, y0, uu, kk)
     ym = ym[-1]  # get model response for [AB]
-    ym = ym[np.isin(tu, ty)]  # get only model response at same timepoints as the yy data
+    idx = abs(ty[:, None] - tm[None, :]).argmin(axis=-1)  # indices of matching values between ty and tu
+    ym = ym[idx]
     residual = (yy - ym) / ye
     return residual
 
@@ -44,16 +86,15 @@ def iter_cb(params, itrn, resid, *args):
     print(table)
 
 
-def optimize_params(save_dp, y_csv_fp, u_csv_fp, ode_model):
-    y_df = pd.read_csv(y_csv_fp)
-    y_df = y_df.groupby("t", as_index=False)["y"].agg(["mean", "sem"])
-    ty = y_df["t"].to_numpy()
-    yy = y_df["mean"].to_numpy()
-    ye = y_df["sem"].to_numpy()
-    u_df = pd.read_csv(u_csv_fp)
-    u_df = u_df.groupby("t", as_index=False)["u"].agg(["mean"])
-    tu = u_df["t"].to_numpy()
-    uu = u_df["mean"].to_numpy()
+def optimize_params(results_dp, rty_df, rtu_df, ode_model):
+    ty_mean = rty_df.groupby("t", as_index=False)["y"].mean()
+    ty_sem = rty_df.groupby("t", as_index=False)["y"].sem()
+    ty = ty_mean["t"].to_numpy()
+    yy = ty_mean["y"].to_numpy()
+    ye = ty_sem["y"].to_numpy()
+    tu_mean = rtu_df.groupby("t", as_index=False)["u"].mean()
+    tu = tu_mean["t"].to_numpy()
+    uu = tu_mean["u"].to_numpy()
     if ode_model == sim_lov:
         y0 = [0, 0, 0, -np.min(yy)]
         yy = yy - np.min(yy)
@@ -65,12 +106,13 @@ def optimize_params(save_dp, y_csv_fp, u_csv_fp, ode_model):
     kk.add("kl", value=0.0, min=0.0, max=100.0)
     kk.add("kd", value=0.0, min=0.0, max=1.0)
     kk.add("kb", value=0.0, min=0.0, max=100.0)
+    obj_func_opto_switch(kk, ty, yy, ye, y0, tu, uu, ode_model)
     opt = minimize(
         fcn=obj_func_opto_switch,
         args=(ty, yy, ye, y0, tu, uu, ode_model),
         params=kk,
         method="differential_evolution",
-        tol=1e-5,
+        tol=1e-4,
         init="halton",
         strategy="best1bin",
         max_iter=10000,
@@ -79,26 +121,44 @@ def optimize_params(save_dp, y_csv_fp, u_csv_fp, ode_model):
         iter_cb=iter_cb,
     )
     print(fit_report(opt))
-    report_fp = os.path.join(save_dp, "fit_report.txt")
+    results_dp = Path(results_dp)
+    report_fp = results_dp / "fit_report.txt"
     with open(report_fp, "w", encoding="utf8") as text_file:
         print(fit_report(opt), file=text_file)
-    params_fp = os.path.join(save_dp, "fit_params.json")
+    params_fp = results_dp / "fit_params.json"
     data = {name: param.value for name, param in opt.params.items()}
     with open(params_fp, "w", encoding="utf8") as json_file:
         json.dump(data, json_file, indent=4)
 
 
 def main():
-    optopi_root_dp = Path(__file__).resolve().parent.parent
-    example_dp = optopi_root_dp / "example"
-    for prot in ["LOV", "LID"]:
-        for mut in ["I427V", "V416I"]:
-            save_dp = example_dp / "fit_model" / prot / mut
-            save_dp.mkdir(parents=True, exist_ok=True)
-            y_csv_fp = example_dp / "data" / prot / mut / "y.csv"
-            u_csv_fp = example_dp / "data" / prot / mut / "u.csv"
-            ode_model = sim_lov if prot == "LOV" else sim_lid
-            optimize_params(save_dp, y_csv_fp, u_csv_fp, ode_model)
+    class_dps = [
+        "/home/phuong/data/phd-project/1--biosensor/1--LOV/0--I427V/",
+        "/home/phuong/data/phd-project/1--biosensor/1--LOV/1--V416I/",
+        "/home/phuong/data/phd-project/1--biosensor/3--iLID/0--I427V/",
+        "/home/phuong/data/phd-project/1--biosensor/3--iLID/1--V416I/",
+    ]
+    results_dps = [
+        "/home/phuong/data/phd-project/2--optopi/0--LOVfast",
+        "/home/phuong/data/phd-project/2--optopi/1--LOVslow",
+        "/home/phuong/data/phd-project/2--optopi/2--iLIDfast",
+        "/home/phuong/data/phd-project/2--optopi/3--iLIDslow",
+    ]
+    if len(class_dps) != len(results_dps):
+        raise ValueError("len(results_dps)")
+    for c, class_dp in enumerate([Path(dp) for dp in class_dps]):
+        results_dp = Path(results_dps[c])
+        results_dp.mkdir(parents=True, exist_ok=True)
+        rty_df = process_rtz_data(class_dp, csv_fn="results/y.csv", calc_fnc=calc_dF_F0)
+        y_csv_fp = results_dp / "y.csv"
+        rty_df.groupby("t", as_index=False)["y"].mean().to_csv(y_csv_fp, index=False)
+        t0 = rty_df["t"].iloc[0]
+        tf = rty_df["t"].iloc[-1]
+        rtu_df = process_rtz_data(class_dp, csv_fn="u.csv", calc_fnc=convert_u_ta_tb, calc_fnc_kwargs={"t0": t0, "tf": tf})
+        u_csv_fp = results_dp / "u.csv"
+        rtu_df.groupby("t", as_index=False)["u"].mean().to_csv(u_csv_fp, index=False)
+        ode_model = sim_lov if "LOV" in str(class_dp) else sim_lid
+        optimize_params(results_dp=results_dp, rty_df=rty_df, rtu_df=rtu_df, ode_model=ode_model)
 
 
 if __name__ == "__main__":
