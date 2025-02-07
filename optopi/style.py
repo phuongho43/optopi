@@ -1,7 +1,7 @@
 PALETTE = ["#8069EC", "#EA822C", "#2ECC71", "#D143A4", "#F1C40F", "#34495E", "#648FFF"]
 
 STYLE = {
-    "figure.figsize": (24, 20),
+    "figure.figsize": (24, 16),
     "lines.linewidth": 16,
     "lines.markersize": 24,
     "lines.markeredgecolor": "#212121",

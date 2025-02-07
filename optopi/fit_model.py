@@ -34,7 +34,7 @@ def calc_dF_F0(y_df):
     return y_df
 
 
-def process_rtz_data(class_dp, csv_fn="y.csv", calc_fnc=None, calc_fnc_kwargs=None):
+def prep_rtz_data(class_dp, csv_fn="y.csv", calc_fnc=None, calc_fnc_kwargs=None):
     rt_ave = []
     rtz_df = []
     for r, rep_dp in enumerate([rep_dp for rep_dp in natsorted(Path(class_dp).glob("*")) if rep_dp.is_dir()]):
@@ -49,6 +49,19 @@ def process_rtz_data(class_dp, csv_fn="y.csv", calc_fnc=None, calc_fnc_kwargs=No
         tz_df["t"] = np.array(rt_ave).mean(axis=0)
     rtz_df = pd.concat(rtz_df)
     return rtz_df
+
+
+def prep_tu_tye_data(class_dp):
+    class_dp = Path(class_dp)
+    rty_df = prep_rtz_data(class_dp, csv_fn="results/y.csv", calc_fnc=calc_dF_F0)
+    t0 = rty_df["t"].iloc[0]
+    tf = rty_df["t"].iloc[-1]
+    rtu_df = prep_rtz_data(class_dp, csv_fn="u.csv", calc_fnc=convert_u_ta_tb, calc_fnc_kwargs={"t0": t0, "tf": tf})
+    tu_df = rtu_df.groupby("t", as_index=False)["u"].mean()
+    tye_df = rty_df.groupby("t", as_index=False)["y"].mean()
+    ty_sem_df = rty_df.groupby("t", as_index=False)["y"].sem()
+    tye_df["e"] = ty_sem_df["y"]
+    return tu_df, tye_df
 
 
 def obj_func_opto_switch(kk, ty, yy, ye, y0, tu, uu, ode_model):
@@ -86,15 +99,12 @@ def iter_cb(params, itrn, resid, *args):
     print(table)
 
 
-def optimize_params(results_dp, rty_df, rtu_df, ode_model):
-    ty_mean = rty_df.groupby("t", as_index=False)["y"].mean()
-    ty_sem = rty_df.groupby("t", as_index=False)["y"].sem()
-    ty = ty_mean["t"].to_numpy()
-    yy = ty_mean["y"].to_numpy()
-    ye = ty_sem["y"].to_numpy()
-    tu_mean = rtu_df.groupby("t", as_index=False)["u"].mean()
-    tu = tu_mean["t"].to_numpy()
-    uu = tu_mean["u"].to_numpy()
+def optimize_params(results_dp, tu_df, tye_df, ode_model):
+    tu = tu_df["t"].to_numpy()
+    uu = tu_df["u"].to_numpy()
+    ty = tye_df["t"].to_numpy()
+    yy = tye_df["y"].to_numpy()
+    ye = tye_df["e"].to_numpy()
     if ode_model == sim_lov:
         y0 = [0, 0, 0, -np.min(yy)]
         yy = yy - np.min(yy)
@@ -112,7 +122,7 @@ def optimize_params(results_dp, rty_df, rtu_df, ode_model):
         args=(ty, yy, ye, y0, tu, uu, ode_model),
         params=kk,
         method="differential_evolution",
-        tol=1e-4,
+        tol=1e-6,
         init="halton",
         strategy="best1bin",
         max_iter=10000,
@@ -132,33 +142,24 @@ def optimize_params(results_dp, rty_df, rtu_df, ode_model):
 
 
 def main():
-    class_dps = [
-        "/home/phuong/data/phd-project/1--biosensor/1--LOV/0--I427V/",
-        "/home/phuong/data/phd-project/1--biosensor/1--LOV/1--V416I/",
-        "/home/phuong/data/phd-project/1--biosensor/3--iLID/0--I427V/",
-        "/home/phuong/data/phd-project/1--biosensor/3--iLID/1--V416I/",
-    ]
     results_dps = [
         "/home/phuong/data/phd-project/2--optopi/0--LOVfast",
         "/home/phuong/data/phd-project/2--optopi/1--LOVslow",
         "/home/phuong/data/phd-project/2--optopi/2--iLIDfast",
         "/home/phuong/data/phd-project/2--optopi/3--iLIDslow",
     ]
-    if len(class_dps) != len(results_dps):
-        raise ValueError("len(results_dps)")
-    for c, class_dp in enumerate([Path(dp) for dp in class_dps]):
-        results_dp = Path(results_dps[c])
+    class_dps = [
+        "/home/phuong/data/phd-project/1--biosensor/1--LOV/0--I427V/",
+        "/home/phuong/data/phd-project/1--biosensor/1--LOV/1--V416I/",
+        "/home/phuong/data/phd-project/1--biosensor/3--iLID/0--I427V/",
+        "/home/phuong/data/phd-project/1--biosensor/3--iLID/1--V416I/",
+    ]
+    for results_dp, class_dp in zip(results_dps, class_dps):
+        results_dp = Path(results_dp)
         results_dp.mkdir(parents=True, exist_ok=True)
-        rty_df = process_rtz_data(class_dp, csv_fn="results/y.csv", calc_fnc=calc_dF_F0)
-        y_csv_fp = results_dp / "y.csv"
-        rty_df.groupby("t", as_index=False)["y"].mean().to_csv(y_csv_fp, index=False)
-        t0 = rty_df["t"].iloc[0]
-        tf = rty_df["t"].iloc[-1]
-        rtu_df = process_rtz_data(class_dp, csv_fn="u.csv", calc_fnc=convert_u_ta_tb, calc_fnc_kwargs={"t0": t0, "tf": tf})
-        u_csv_fp = results_dp / "u.csv"
-        rtu_df.groupby("t", as_index=False)["u"].mean().to_csv(u_csv_fp, index=False)
+        tu_df, tye_df = prep_tu_tye_data(class_dp)
         ode_model = sim_lov if "LOV" in str(class_dp) else sim_lid
-        optimize_params(results_dp=results_dp, rty_df=rty_df, rtu_df=rtu_df, ode_model=ode_model)
+        optimize_params(results_dp=results_dp, tu_df=tu_df, tye_df=tye_df, ode_model=ode_model)
 
 
 if __name__ == "__main__":

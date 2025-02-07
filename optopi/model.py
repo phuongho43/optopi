@@ -16,7 +16,7 @@ def sim_lov(tt, y0, uu, kk):
         return [dAi, dAa, dB, dAB]
 
     solver = ode(model)
-    solver.set_integrator("vode", method="bdf", rtol=1e-6, atol=1e-6, max_step=0.1)
+    solver.set_integrator("vode", method="bdf", rtol=1e-5, atol=1e-5, max_step=0.1)
     solver.set_initial_value(y0)
     sol_t = [tt[0]]
     sol_y = [y0]
@@ -42,7 +42,7 @@ def sim_lid(tt, y0, uu, kk):
         return [dAi, dAa, dB, dAB]
 
     solver = ode(model)
-    solver.set_integrator("vode", method="bdf", rtol=1e-6, atol=1e-6, max_step=0.1)
+    solver.set_integrator("vode", method="bdf", rtol=1e-5, atol=1e-5, max_step=0.1)
     solver.set_initial_value(y0)
     sol_t = [tt[0]]
     sol_y = [y0]
@@ -77,7 +77,7 @@ def sim_sparser(tt, y0, uu, kk):
         return [dAi, dAa, dBi, dBa, dC, dAiBi, dAiBa, dBaC, dAiBaC]
 
     solver = ode(model)
-    solver.set_integrator("vode", method="bdf", rtol=1e-6, atol=1e-6, max_step=0.1)
+    solver.set_integrator("vode", method="bdf", rtol=1e-5, atol=1e-5, max_step=0.1)
     solver.set_initial_value(y0)
     sol_t = [tt[0]]
     sol_y = [y0]
