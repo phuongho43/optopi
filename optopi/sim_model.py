@@ -127,10 +127,10 @@ def prep_and_sim_fm_ave(ilidfast_class_dp, sparser_class_dp, ilidfast_k_json_fp,
         uu = np.zeros_like(tu)
         uu[period:121:period] = 1
         tm_denser, ym_denser = sim_lid(tu, y0_denser, uu, kk_denser)
-        y_ave_denser = np.mean(ym_denser[-1])
-        fm_ave_df.append({"c": 0, "t": freq, "y": y_ave_denser})
         tm_sparser, ym_sparser = sim_sparser(tu, y0_sparser, uu, kk_sparser)
+        y_ave_denser = np.mean(ym_denser[-1])
         y_ave_sparser = np.mean(ym_sparser[-1])
+        fm_ave_df.append({"c": 0, "t": freq, "y": y_ave_denser})
         fm_ave_df.append({"c": 1, "t": freq, "y": y_ave_sparser})
     fm_ave_df = pd.DataFrame(fm_ave_df)
     return fm_ave_df
