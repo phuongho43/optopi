@@ -12,7 +12,7 @@ from optopi.model import sim_lid, sim_lov, sim_sparser
 from optopi.style import PALETTE, STYLE
 
 
-def plot_model_fit(fig_fp, ty_data_df, ty_model_df, tu_data_df=None, figsize=(24, 16), leg_loc="best", palette=PALETTE, rc_params=STYLE):
+def plot_model_fit(fig_fp, ty_data_df, ty_model_df, xlabel, ylabel, tu_data_df=None, figsize=(24, 16), leg_loc="best", palette=PALETTE, rc_params=STYLE):
     fig_fp = Path(fig_fp)
     fig_fp.parent.mkdir(parents=True, exist_ok=True)
     with sns.axes_style("whitegrid"), mpl.rc_context(rc_params):
@@ -21,9 +21,10 @@ def plot_model_fit(fig_fp, ty_data_df, ty_model_df, tu_data_df=None, figsize=(24
         class_labels = ["Data", "Model"]
         lw = rc_params["lines.linewidth"]
         if tu_data_df is not None:
+            u_lw = 4 if len(tu_data_df.loc[(tu_data_df["u"] > 0)]) / len(tu_data_df) < 0.05 else 0
             dt = tu_data_df["t"].diff().mean()
             for t in tu_data_df.loc[(tu_data_df["u"] > 0), "t"]:
-                ax.axvspan(t, t + dt, color="#648FFF", lw=2)
+                ax.axvspan(t, t + dt, color="#648FFF", lw=u_lw, alpha=0.8)
             handles.append(mpl.lines.Line2D([], [], color="#648FFF", lw=lw, ls=(0, (1, 0))))
             class_labels.insert(0, "Input")
         sns.lineplot(ax=ax, data=ty_data_df, x="t", y="y", color=palette[0], linewidth=0, marker="o", markeredgewidth=0, zorder=2.3)
@@ -34,8 +35,8 @@ def plot_model_fit(fig_fp, ty_data_df, ty_model_df, tu_data_df=None, figsize=(24
         ]
         handles.extend(line_handles)
         ax.legend(handles, class_labels, loc=leg_loc)
-        ax.set_xlabel("Time (s)")
-        ax.set_ylabel("Response (AU)")
+        ax.set_xlabel(xlabel)
+        ax.set_ylabel(ylabel)
         ax.locator_params(axis="x", nbins=10)
         ax.locator_params(axis="y", nbins=10)
         fig.tight_layout()
@@ -165,8 +166,10 @@ def main():
             tu_data_df, ty_data_df, ty_model_df = prep_and_sim_lov(class_dp, k_json_fp)
         elif "lid" in str(class_dp).lower():
             tu_data_df, ty_data_df, ty_model_df = prep_and_sim_lid(class_dp, k_json_fp)
+        xlabel = "Time (s)"
+        ylabel = "Output (AU)"
         palette = ["#34495E", "#2ECC71"]
-        plot_model_fit(fig_fp, ty_data_df, ty_model_df, tu_data_df=tu_data_df, palette=palette)
+        plot_model_fit(fig_fp, ty_data_df, ty_model_df, xlabel=xlabel, ylabel=ylabel, tu_data_df=tu_data_df, palette=palette)
 
     ## Figure 3G ##
     fig_fp = Path("/home/phuong/data/phd-project/figures/fig_3g.png")
@@ -174,8 +177,10 @@ def main():
     k_lovfast_json_fp = Path("/home/phuong/data/phd-project/2--optopi/0--LOVfast/fit_params.json")
     k_ilidslow_json_fp = Path("/home/phuong/data/phd-project/2--optopi/3--iLIDslow/fit_params.json")
     tu_data_df, ty_data_df, ty_model_df = prep_and_sim_sparser(class_dp, k_lovfast_json_fp, k_ilidslow_json_fp)
+    xlabel = "Time (s)"
+    ylabel = "Output (AU)"
     palette = ["#34495E", "#EA822C"]
-    plot_model_fit(fig_fp, ty_data_df, ty_model_df, tu_data_df=tu_data_df, palette=palette)
+    plot_model_fit(fig_fp, ty_data_df, ty_model_df, xlabel=xlabel, ylabel=ylabel, tu_data_df=tu_data_df, palette=palette)
 
     ## Sim FM Ave Response for Dense and Sparse Decoders ##
     ilidfast_class_dp = Path("/home/phuong/data/phd-project/1--biosensor/3--iLID/0--I427V/")
