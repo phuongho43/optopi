@@ -157,7 +157,7 @@ def main():
         "/home/phuong/data/phd-project/1--biosensor/3--iLID/0--I427V/",
         "/home/phuong/data/phd-project/1--biosensor/3--iLID/1--V416I/",
     ]
-    for fig_str, results_str, class_str in zip(fig_fps, results_dps, class_dps):
+    for fig_str, results_str, class_str in zip(fig_fps, results_dps, class_dps, strict=False):
         fig_fp = Path(fig_str)
         results_dp = Path(results_str)
         class_dp = Path(class_str)

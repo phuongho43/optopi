@@ -107,17 +107,17 @@ def main():
     df.to_csv(OUT / "crosstalk_screen.csv", index=False)
 
     # save all FM curves (for re-plotting without re-simulating)
-    crows = [{"param": "baseline", "mult": 1.0, "freq": f, "output": o} for f, o in zip(fb, ob)]
-    crows += [{"param": "dense_ref", "mult": 1.0, "freq": f, "output": o} for f, o in zip(fd, od)]
+    crows = [{"param": "baseline", "mult": 1.0, "freq": f, "output": o} for f, o in zip(fb, ob, strict=False)]
+    crows += [{"param": "dense_ref", "mult": 1.0, "freq": f, "output": o} for f, o in zip(fd, od, strict=False)]
     for (tgt, m), (f, o) in curves.items():
-        crows += [{"param": tgt, "mult": m, "freq": ff, "output": oo} for ff, oo in zip(f, o)]
+        crows += [{"param": tgt, "mult": m, "freq": ff, "output": oo} for ff, oo in zip(f, o, strict=False)]
     pd.DataFrame(crows).to_csv(OUT / "crosstalk_curves.csv", index=False)
 
     # ---- plot: one panel per swept param (FM curves by multiplier) + summary ----
     cmap = plt.get_cmap("viridis")
     with mpl.rc_context({"font.size": 22, "lines.linewidth": 3, "figure.dpi": 150}):
         fig, axes = plt.subplots(2, 2, figsize=(20, 16))
-        for ax, tgt in zip(axes.flat[:3], TARGETS):
+        for ax, tgt in zip(axes.flat[:3], TARGETS, strict=False):
             ax.plot(np.sort(fd), od[np.argsort(fd)], color="#8069EC", ls="--", lw=2.5, label="dense decoder (ref)")
             for i, m in enumerate(MULTS):
                 f, o = curves[(tgt, m)]

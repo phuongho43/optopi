@@ -125,7 +125,7 @@ def main():
     bank_rows = []
     for n in names:
         f, o, pf = bank[n]
-        bank_rows += [{"channel": n.split(" ")[0], "label": n, "peak_freq": pf, "freq": ff, "output": oo} for ff, oo in zip(f, o)]
+        bank_rows += [{"channel": n.split(" ")[0], "label": n, "peak_freq": pf, "freq": ff, "output": oo} for ff, oo in zip(f, o, strict=False)]
     pd.DataFrame(bank_rows).to_csv(OUT / "bank_curves.csv", index=False)
 
     # ---- plots (optopi house style) ----

@@ -93,7 +93,7 @@ with mpl.rc_context(HOUSE):
     panel_label(ax[1], "B")
 
     # C: crosstalk@1Hz invariance
-    for p, c in zip(["kb1", "kl1", "kd1"], [NAVY, GREEN, ORANGE]):
+    for p, c in zip(["kb1", "kl1", "kd1"], [NAVY, GREEN, ORANGE], strict=False):
         s = summ[summ.param == p].sort_values("mult")
         ax[2].plot(s["mult"], s["crosstalk_1Hz"], marker="o", color=c, label=p)
     pk = float(summ["peak"].max())

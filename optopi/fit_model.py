@@ -15,7 +15,7 @@ def convert_u_ta_tb(u_ta_tb_df, t0, tf):
     u_tb = np.round(u_ta_tb_df["tb"].values, 1)
     tt = np.round(np.arange(t0, tf + 0.1, 0.1), 1)
     uu = np.zeros_like(tt)
-    for ta, tb in zip(u_ta, u_tb):
+    for ta, tb in zip(u_ta, u_tb, strict=False):
         if ta > tt[-1]:
             continue
         if tb > tt[-1]:
@@ -154,7 +154,7 @@ def main():
         "/home/phuong/data/phd-project/1--biosensor/3--iLID/0--I427V/",
         "/home/phuong/data/phd-project/1--biosensor/3--iLID/1--V416I/",
     ]
-    for results_str, class_dp in zip(results_dps, class_dps):
+    for results_str, class_dp in zip(results_dps, class_dps, strict=False):
         results_dp = Path(results_str)
         results_dp.mkdir(parents=True, exist_ok=True)
         tu_df, tye_df = prep_tu_tye_data(class_dp)
