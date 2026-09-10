@@ -157,10 +157,10 @@ def main():
         "/home/phuong/data/phd-project/1--biosensor/3--iLID/0--I427V/",
         "/home/phuong/data/phd-project/1--biosensor/3--iLID/1--V416I/",
     ]
-    for fig_fp, results_dp, class_dp in zip(fig_fps, results_dps, class_dps):
-        fig_fp = Path(fig_fp)
-        results_dp = Path(results_dp)
-        class_dp = Path(class_dp)
+    for fig_str, results_str, class_str in zip(fig_fps, results_dps, class_dps):
+        fig_fp = Path(fig_str)
+        results_dp = Path(results_str)
+        class_dp = Path(class_str)
         k_json_fp = results_dp / "fit_params.json"
         if "lov" in str(class_dp).lower():
             tu_data_df, ty_data_df, ty_model_df = prep_and_sim_lov(class_dp, k_json_fp)

@@ -154,8 +154,8 @@ def main():
         "/home/phuong/data/phd-project/1--biosensor/3--iLID/0--I427V/",
         "/home/phuong/data/phd-project/1--biosensor/3--iLID/1--V416I/",
     ]
-    for results_dp, class_dp in zip(results_dps, class_dps):
-        results_dp = Path(results_dp)
+    for results_str, class_dp in zip(results_dps, class_dps):
+        results_dp = Path(results_str)
         results_dp.mkdir(parents=True, exist_ok=True)
         tu_df, tye_df = prep_tu_tye_data(class_dp)
         ode_model = sim_lov if "LOV" in str(class_dp) else sim_lid
