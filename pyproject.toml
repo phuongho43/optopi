@@ -53,6 +53,12 @@ build-backend = "setuptools.build_meta"
 [tool.setuptools]
 py-modules = ["optopi"]
 
+[tool.deptry.per_rule_ignores]
+# numdifftools is never imported here: lmfit reaches for it when estimating parameter
+# uncertainties from minimize(), so it is a real runtime requirement that deptry cannot
+# see. Removing it would break the fits silently.
+DEP002 = ["numdifftools"]
+
 [tool.mypy]
 files = ["optopi"]
 # Annotating this research code was never done and is not a prerequisite for depositing it.
