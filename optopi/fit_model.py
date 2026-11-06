@@ -121,6 +121,13 @@ def optimize_params(results_dp, tu_df, tye_df, ode_model):
         fcn=obj_func_opto_switch,
         args=(ty, yy, ye, y0, tu, uu, ode_model),
         params=kk,
+        # NOTE: `max_iter` and `pop_size` below are NOT SciPy's parameter names
+        # (`maxiter`, `popsize`). lmfit passes them through without complaint and
+        # SciPy ignores them, so the published fits ran at SciPy's DEFAULTS
+        # (popsize=15, maxiter=1000). Verified empirically: the objective-call count
+        # with these kwargs matches the no-kwargs run, while the correctly spelled
+        # names change it ~5x. Do NOT 'fix' the spelling -- that would change the
+        # search and no longer reproduce the deposited fit_params.json.
         method="differential_evolution",
         tol=1e-6,
         init="halton",

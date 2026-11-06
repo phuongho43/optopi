@@ -122,7 +122,10 @@ def prep_and_sim_fm_ave(ilidfast_class_dp, sparser_class_dp, ilidfast_k_json_fp,
     # Calc FM Ave Response
     fm_ave_df = []
     tu = np.arange(0, 121, 1)
-    periods = [1, 2, 3, 4, 5, 6, 8, 10, 12, 14, 16, 20, 24, 28, 32, 36, 40, 50, 60, 70, 80, 90, 100, 121]
+    # 121 was dropped in November 2026. The input is built as uu[period:121:period] = 1
+    # on a 121-point grid, so period = 121 makes an EMPTY slice: no light is delivered at
+    # all. That point was a dark control, plotted as if it were a 0.00826 Hz stimulus.
+    periods = [1, 2, 3, 4, 5, 6, 8, 10, 12, 14, 16, 20, 24, 28, 32, 36, 40, 50, 60, 70, 80, 90, 100]
     for period in periods:
         freq = 1 / period
         uu = np.zeros_like(tu)

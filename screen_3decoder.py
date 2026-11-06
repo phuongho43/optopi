@@ -31,7 +31,8 @@ BIO = DATA / "1--biosensor"
 OUT = OPTO / "6--three-decoder-search"
 OUT.mkdir(parents=True, exist_ok=True)
 
-PERIODS = sorted({*range(1, 21), 22, 24, 26, 28, 30, 33, 36, 40, 45, 50, 55, 60, 70, 80, 90, 100, 110, 121})
+# 121 dropped Nov 2026: uu[121:121:121] is an EMPTY slice -- no light delivered.
+PERIODS = sorted({*range(1, 21), 22, 24, 26, 28, 30, 33, 36, 40, 45, 50, 55, 60, 70, 80, 90, 100, 110})
 TU = np.arange(0, 121, 1)
 KD1S = [0.25, 0.5, 1.0, 2.0, 4.0, 8.0]  # LOV dark-reversion folds
 KD2S = [0.25, 0.5, 1.0, 2.0, 4.0, 8.0]  # iLIDslow reversion folds (accumulation timescale)

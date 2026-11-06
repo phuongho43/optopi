@@ -35,7 +35,9 @@ BIO = DATA / "1--biosensor"
 OUT = OPTO / "5--crosstalk-screen"
 OUT.mkdir(parents=True, exist_ok=True)
 
-PERIODS = sorted({*range(1, 21), 22, 24, 26, 28, 30, 33, 36, 40, 45, 50, 55, 60, 70, 80, 90, 100, 110, 121})  # fine grid (pub quality)
+# 121 dropped Nov 2026: uu[121:121:121] is an EMPTY slice, so that point delivered no
+# light at all -- a dark control plotted as a 0.00826 Hz stimulus. See optopi/model.py.
+PERIODS = sorted({*range(1, 21), 22, 24, 26, 28, 30, 33, 36, 40, 45, 50, 55, 60, 70, 80, 90, 100, 110})  # fine grid (pub quality)
 TU = np.arange(0, 121, 1)
 MULTS = [0.25, 0.5, 1.0, 2.0, 4.0]  # log-spaced fold-range around fitted value
 TARGETS = ["kb1", "kl1", "kd1"]  # LOV repression module (kb1 primary per P.H.)
