@@ -26,7 +26,7 @@ import pandas as pd
 _mpath.Path.__deepcopy__ = lambda self, memo=None: _mpath.Path(self.vertices.copy(), self.codes.copy() if self.codes is not None else None)
 
 from optopi.fit_model import prep_tu_tye_data  # noqa: E402  (must follow the Path.__deepcopy__ patch above)
-from optopi.model import sim_lid, sim_sparser  # noqa: E402  (must follow the Path.__deepcopy__ patch above)
+from optopi.model import sim_lid, sim_sparser, sparser_dark_equilibrium, sparser_signal  # noqa: E402  (must follow the Path.__deepcopy__ patch above)
 from optopi.sim_model import prep_sparser_params  # noqa: E402  (must follow the Path.__deepcopy__ patch above)
 
 DATA = Path("/home/phuong/projects/csc-revisions-2026/data")
@@ -44,11 +44,15 @@ TARGETS = ["kb1", "kl1", "kd1"]  # LOV repression module (kb1 primary per P.H.)
 DENSE_FREQ = 1.0  # period = 1 -> dense/continuous input
 
 
-def sparse_y0():
-    _, ty = prep_tu_tye_data(BIO / "5--decoder" / "0--sparse-ddFP")
-    yy = ty["y"].to_numpy()
-    yy = yy - np.min(yy)
-    return [0, 0, 0, 0, float(np.max(yy)), float(np.max(yy)), 0, 0, float(yy[0])]
+def sparse_y0(kk):
+    """The sparse decoder's dark equilibrium.
+
+    Was the data's own offset handed in as AiBaC(0). The model now has a dark-state binding
+    reaction, so the resting state is a property of the parameters rather than of a
+    recording. It depends only on kb1, kb2d and kd2d, so one call serves the whole reversion
+    sweep -- kd1 and kd2 enter through terms that are zero in the dark.
+    """
+    return sparser_dark_equilibrium(kk)
 
 
 def dense_y0():
@@ -64,8 +68,14 @@ def fm_curve(sim, y0, kk):
         uu = np.zeros_like(TU)
         uu[period:121:period] = 1
         _, ym = sim(TU, y0, uu, kk)
+        # Read the sparse decoder's signal through sparser_signal, NOT ym[-1]: it is now the
+        # sum of the lit and dark ternary complexes, and the positional convention would
+        # silently return the dark one alone while still producing a plausible curve. The
+        # resting level is subtracted because the confusion matrix normalises each channel
+        # to its own peak, so a constant baseline would not divide out.
+        y = sparser_signal(ym) if sim is sim_sparser else ym[-1]
         freqs.append(1.0 / period)
-        outs.append(float(np.mean(ym[-1])))
+        outs.append(float(np.mean(y - y[0])))
     return np.array(freqs), np.array(outs)
 
 
@@ -80,11 +90,13 @@ def metrics(freqs, outs):
 
 
 def main():
-    y0s = sparse_y0()
     y0d = dense_y0()
     with open(OPTO / "2--iLIDfast" / "fit_params.json") as fh:
         k_ilidfast = json.load(fh)
     kk_base = prep_sparser_params(OPTO / "0--LOVfast" / "fit_params.json", OPTO / "3--iLIDslow" / "fit_params.json")
+    # The rest state now follows from the parameters (dark-state binding), not from
+    # the recording. Unaffected by the rates this screen scales.
+    y0s = sparse_y0(kk_base)
     print("Sparse-decoder base params:", {k: round(v, 4) for k, v in kk_base.items()})
 
     # dense decoder reference curve

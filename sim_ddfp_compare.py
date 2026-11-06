@@ -16,7 +16,7 @@ import pandas as pd
 
 sys.path.insert(0, str(Path(__file__).parent))
 from optopi.fit_model import prep_tu_tye_data
-from optopi.model import sim_sparser
+from optopi.model import sim_sparser, sparser_dark_equilibrium, sparser_signal
 from optopi.sim_model import prep_sparser_params
 
 REPO = Path("/home/phuong/projects/csc-revisions-2026")
@@ -27,28 +27,42 @@ OUT.mkdir(parents=True, exist_ok=True)
 
 
 def run(class_dp, tmax=None):
+    """Simulate the decoder against a recording, in the recording's own dF/F0 frame.
+
+    Changed November 2026. This used to subtract the data's minimum and then hand the
+    resulting offset to the model as AiBaC(0) -- the only way a nine-state model with no
+    dark-state binding could sit above the level it reaches under dense input. The model now
+    produces that resting level itself, so the data is used raw and the observation model
+    carries no offset: y = s * (signal - signal_dark), one scale for the arbitrary dF/F0
+    units. See optopi/model.py and fit_dark_affinity.py.
+    """
     tu, ty = prep_tu_tye_data(class_dp)
     if tmax:
         tu, ty = tu[tu.t < tmax], ty[ty.t < tmax]
-    yy = ty.y.to_numpy() - ty.y.to_numpy().min()
-    ty = ty.assign(y=yy)
-    y0 = [0, 0, 0, 0, yy.max(), yy.max(), 0, 0, yy[0]]
+    raw = ty.y.to_numpy()
     kk = prep_sparser_params(KLOV, KILID)
+    y0 = sparser_dark_equilibrium(kk)
     tm, ym = sim_sparser(tu.t.to_numpy(), y0, tu.u.to_numpy(), kk)
-    return tu, ty, pd.DataFrame({"t": tm, "y": ym[-1]})
+    d = sparser_signal(ym) - sparser_signal(ym)[0]
+    di = np.interp(ty.t.to_numpy(), tm, d)
+    s = float(np.dot(di, raw) / np.dot(di, di))
+    out = pd.DataFrame({"t": tm, "y": s * d})
+    out.attrs["scale"] = s  # so the idealized-input run can be drawn on the same scale
+    return tu, ty, out
 
 
-def ideal(tmax, sparse_win, dense_win, sparse_period=4.0, width=1.0, y_scale=1.0, y_init=0.0):
+def ideal(tmax, sparse_win, dense_win, sparse_period=4.0, width=1.0, y_scale=1.0):
     """Figures 4-6 working inputs: 25% duty sparse, continuous dense."""
     tt = np.round(np.arange(0, tmax + 0.1, 0.1), 1)
     uu = np.zeros_like(tt)
     for s in np.arange(sparse_win[0], sparse_win[1], sparse_period):
         uu[(tt >= s) & (tt < s + width)] = 1.0
     uu[(tt >= dense_win[0]) & (tt < dense_win[1])] = 1.0
-    y0 = [0, 0, 0, 0, y_scale, y_scale, 0, 0, y_init]
     kk = prep_sparser_params(KLOV, KILID)
+    y0 = sparser_dark_equilibrium(kk)
     tm, ym = sim_sparser(tt, y0, uu, kk)
-    return pd.DataFrame({"t": tt, "u": uu}), pd.DataFrame({"t": tm, "y": ym[-1]})
+    d = sparser_signal(ym) - sparser_signal(ym)[0]
+    return pd.DataFrame({"t": tt, "u": uu}), pd.DataFrame({"t": tm, "y": y_scale * d})
 
 
 if __name__ == "__main__":
@@ -67,11 +81,11 @@ if __name__ == "__main__":
         yi = np.interp(ty.t, tm.t, tm.y)
         ss = 1 - np.sum((ty.y - yi) ** 2) / np.sum((ty.y - ty.y.mean()) ** 2)
         print(f"    R^2 at sampled points = {ss:.3f}   data range [{ty.y.min():.3f}, {ty.y.max():.3f}]" f"   model range [{tm.y.min():.3f}, {tm.y.max():.3f}]")
-    # C: idealized working inputs, same window layout AND same initial conditions /
-    # scale as the new-dataset run, so the two curves are directly comparable.
-    _, ty_new, _ = run(REPO / "data/1--biosensor/7--decoder-new/2--sparse-ddFP")
-    yy_new = ty_new.y.to_numpy()
-    tu_i, tm_i = ideal(320, (60, 186), (186, 320), y_scale=yy_new.max(), y_init=yy_new[0])
+    # C: idealized working inputs, same window layout and the same fitted scale as the
+    # new-dataset run, so the two curves are directly comparable. There is no longer an
+    # initial condition to match: both start from the model's own dark equilibrium.
+    _, _, tm_new_for_scale = run(REPO / "data/1--biosensor/7--decoder-new/2--sparse-ddFP")
+    tu_i, tm_i = ideal(320, (60, 186), (186, 320), y_scale=tm_new_for_scale.attrs["scale"])
     tu_i.to_csv(OUT / "ideal_input.csv", index=False)
     tm_i.to_csv(OUT / "ideal_model.csv", index=False)
     print("\n  regime means, same y0/scale for both (model, 0.1 s grid):")

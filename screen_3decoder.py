@@ -20,7 +20,7 @@ import numpy as np
 import pandas as pd
 
 from optopi.fit_model import prep_tu_tye_data
-from optopi.model import sim_lid, sim_sparser
+from optopi.model import sim_lid, sim_sparser, sparser_dark_equilibrium, sparser_signal
 from optopi.sim_model import prep_sparser_params
 
 _mpath.Path.__deepcopy__ = lambda self, memo=None: _mpath.Path(self.vertices.copy(), self.codes.copy() if self.codes is not None else None)
@@ -38,11 +38,15 @@ KD1S = [0.25, 0.5, 1.0, 2.0, 4.0, 8.0]  # LOV dark-reversion folds
 KD2S = [0.25, 0.5, 1.0, 2.0, 4.0, 8.0]  # iLIDslow reversion folds (accumulation timescale)
 
 
-def sparse_y0():
-    _, ty = prep_tu_tye_data(BIO / "5--decoder" / "0--sparse-ddFP")
-    yy = ty["y"].to_numpy()
-    yy = yy - np.min(yy)
-    return [0, 0, 0, 0, float(np.max(yy)), float(np.max(yy)), 0, 0, float(yy[0])]
+def sparse_y0(kk):
+    """The sparse decoder's dark equilibrium.
+
+    Was the data's own offset handed in as AiBaC(0). The model now has a dark-state binding
+    reaction, so the resting state is a property of the parameters rather than of a
+    recording. It depends only on kb1, kb2d and kd2d, so one call serves the whole reversion
+    sweep -- kd1 and kd2 enter through terms that are zero in the dark.
+    """
+    return sparser_dark_equilibrium(kk)
 
 
 def dense_y0():
@@ -57,8 +61,14 @@ def fm_curve(sim, y0, kk):
         uu = np.zeros_like(TU)
         uu[period:121:period] = 1
         _, ym = sim(TU, y0, uu, kk)
+        # Read the sparse decoder's signal through sparser_signal, NOT ym[-1]: it is now the
+        # sum of the lit and dark ternary complexes, and the positional convention would
+        # silently return the dark one alone while still producing a plausible curve. The
+        # resting level is subtracted because the confusion matrix normalises each channel
+        # to its own peak, so a constant baseline would not divide out.
+        y = sparser_signal(ym) if sim is sim_sparser else ym[-1]
         freqs.append(1.0 / period)
-        outs.append(float(np.mean(ym[-1])))
+        outs.append(float(np.mean(y - y[0])))
     f = np.array(freqs)
     o = np.array(outs)
     order = np.argsort(f)
@@ -66,10 +76,12 @@ def fm_curve(sim, y0, kk):
 
 
 def main():
-    y0s, y0d = sparse_y0(), dense_y0()
     with open(OPTO / "2--iLIDfast" / "fit_params.json") as fh:
         k_ilidfast = json.load(fh)
     base = prep_sparser_params(OPTO / "0--LOVfast" / "fit_params.json", OPTO / "3--iLIDslow" / "fit_params.json")
+    # The sparse decoder's rest state now comes from the parameters, so it needs them. It
+    # depends only on kb1/kb2d/kd2d, none of which the sweep scales, so one call is enough.
+    y0s, y0d = sparse_y0(base), dense_y0()
 
     fd, od = fm_curve(sim_lid, y0d, k_ilidfast)  # dense channel (high-pass)
     dense_peak_f = float(fd[np.argmax(od)])

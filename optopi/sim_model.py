@@ -8,7 +8,7 @@ import pandas as pd
 import seaborn as sns
 
 from optopi.fit_model import prep_tu_tye_data
-from optopi.model import sim_lid, sim_lov, sim_sparser
+from optopi.model import sim_lid, sim_lov, sim_sparser, sparser_dark_equilibrium, sparser_signal
 from optopi.style import PALETTE, STYLE
 
 
@@ -73,11 +73,24 @@ def prep_and_sim_lid(class_dp, k_json_fp):
     return tu_data_df, ty_data_df, ty_model_df
 
 
-def prep_sparser_params(k_lovfast_json_fp, k_ilidslow_json_fp):
+DARK_AFFINITY = Path("/home/phuong/projects/csc-revisions-2026/data/2--optopi/7--ddfp-resolution/dark_affinity.json")
+
+
+def prep_sparser_params(k_lovfast_json_fp, k_ilidslow_json_fp, dark_json_fp=None):
+    """Compose the sparse-decoder parameters from the two module fits, plus the dark affinity.
+
+    kl/kd/kb come from the LOVfast and iLIDslow biosensor fits, as they always have. kb2d and
+    kd2d -- dark-state iLID/sspB binding -- cannot: dF/F0 normalisation subtracts a constant
+    dark complex, so the biosensor traces in Figures 2D-2F carry no information about it. It is
+    visible only in the decoder, where releasing LOV can destroy the dark complex, so it is
+    fitted there by fit_dark_affinity.py and read from that file rather than hard-coded here.
+    """
     with open(k_lovfast_json_fp) as jf:
         kk_lovfast = json.load(jf)
     with open(k_ilidslow_json_fp) as jf:
         kk_ilidslow = json.load(jf)
+    with open(dark_json_fp or DARK_AFFINITY) as jf:
+        dark = json.load(jf)
     kk = {
         "kl1": kk_lovfast["kl"],
         "kd1": kk_lovfast["kd"],
@@ -86,6 +99,10 @@ def prep_sparser_params(k_lovfast_json_fp, k_ilidslow_json_fp):
         "kd2": kk_ilidslow["kd"],
         "kb2": kk_ilidslow["kb"],
     }
+    # Association is taken as diffusion-limited and therefore unchanged by the photostate;
+    # only the off-rate differs, so the dark affinity is one number, not two.
+    kk["kb2d"] = kk["kb2"]
+    kk["kd2d"] = dark["kd_dark_over_pool"] * kk["kb2"]
     return kk
 
 
@@ -96,12 +113,16 @@ def prep_and_sim_sparser(class_dp, k_lovfast_json_fp, k_ilidslow_json_fp):
     uu = tu_data_df["u"].to_numpy()
     ty_data_df = ty_data_df.loc[(ty_data_df["t"] < 155)]
     yy = ty_data_df["y"].to_numpy()
-    ty_data_df["y"] = ty_data_df["y"] - np.min(yy)
-    yy = yy - np.min(yy)
-    y0 = [0, 0, 0, 0, np.max(yy), np.max(yy), 0, 0, yy[0]]
+    # No min-subtraction and no offset: the dark-binding model produces the resting level
+    # itself, so the data stays in its own dF/F0 frame and the only free quantity is the
+    # scale that the arbitrary units require. See optopi/model.py, note 3.
     kk = prep_sparser_params(k_lovfast_json_fp, k_ilidslow_json_fp)
+    y0 = sparser_dark_equilibrium(kk)
     tm, ym = sim_sparser(tu, y0, uu, kk)
-    ty_model_df = pd.DataFrame({"t": tm, "y": ym[-1]})
+    d = sparser_signal(ym) - sparser_signal(ym)[0]
+    di = np.interp(ty_data_df["t"].to_numpy(), tm, d)
+    scale = float(np.dot(di, yy) / np.dot(di, di))
+    ty_model_df = pd.DataFrame({"t": tm, "y": scale * d})
     return tu_data_df, ty_data_df, ty_model_df
 
 
